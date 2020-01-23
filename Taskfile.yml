@@ -1,0 +1,16 @@
+---
+# https://taskfile.dev
+
+version: '2'
+
+tasks:
+  nuke:
+    cmds:
+      - |
+        kubectl delete all --all -n "{{.NAMESPACE}}"
+        kubectl describe pvc -n "{{.NAMESPACE}}" | grep "Name:" | awk '{print $2}' | { while read i; do echo $i; kubectl patch pvc $i -p '{"metadata":{"finalizers": []}}' --type=merge -n "{{.NAMESPACE}}"; done }
+        kubectl describe pvc -n "{{.NAMESPACE}}" | grep "Name:" | awk '{print $2}' | { while read i; do echo $i; kubectl delete pvc $i -n "{{.NAMESPACE}}"; done }
+        kubectl delete configmap --all -n "{{.NAMESPACE}}"
+        kubectl delete secret --all -n "{{.NAMESPACE}}"
+    vars:
+      NAMESPACE: '{{default "default" .NAMESPACE}}'
